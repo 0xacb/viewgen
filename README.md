@@ -22,7 +22,7 @@
 ### Usage
 ```bash
 $ ./viewstate -h
-usage: viewgen [-h] [-c WEBCONFIG] [-m MODIFIER] [-e] [-d] [--check]
+usage: viewgen [-h] [-c WEBCONFIG] [-m MODIFIER] [-e] [-d] [--guess] [--check]
                [--vkey VKEY] [--valg VALG] [--dkey DKEY] [--dalg DALG]
                payload
 
@@ -40,6 +40,7 @@ optional arguments:
                         VIEWSTATEGENERATOR value
   -e, --encrypted       Viewstate is encrypted
   -d, --decode          decodes ViewState payload
+  --guess               guess signature and encryption mode
   --check               checks if modifier and keys are correct for a given
                         ViewState payload
   --vkey VKEY           validation key
