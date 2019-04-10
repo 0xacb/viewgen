@@ -265,18 +265,20 @@ def run_viewgen(args):
 			warning("Signature fail")
 
 	if args.guess:
-		viewstate, sa = viewgen.decode(args.payload)
+		viewstate, signature = viewgen.decode(args.payload)
 		if viewstate is None:
 			warning("ViewState is encrypted")
 			candidates = viewgen.guess_algorithms(args.payload)
 			success("Algorithm candidates:")
 			for candidate in candidates:
 				print("%s %s" % (candidate[0], candidate[1].upper()))
-
 		else:
-			hash_alg = list(viewgen.hash_sizes.keys())[list(viewgen.hash_sizes.values()).index(len(sa))]
 			success("ViewState is not encrypted")
-			success("Signature algorithm: %s" % hash_alg.upper())
+			if signature is None:
+				success("ViewState is not signed")
+			else:
+				hash_alg = list(viewgen.hash_sizes.keys())[list(viewgen.hash_sizes.values()).index(len(sa))]
+				success("Signature algorithm: %s" % hash_alg.upper())
 
 	if generate:
 		result = viewgen.encode(args.payload)
