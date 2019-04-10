@@ -169,9 +169,7 @@ class ViewGen:
 			if (payload_size - hash_size) % AES.block_size == 0:
 				candidates.append(("AES", hash_alg))
 			if (payload_size - hash_size) % DES.block_size == 0:
-				candidates.append(("DES", hash_alg))
-			if (payload_size - hash_size) % DES3.block_size == 0:
-				candidates.append(("3DES", hash_alg))
+				candidates.append(("DES/3DES", hash_alg))
 		return candidates
 
 	@staticmethod
@@ -273,7 +271,7 @@ def run_viewgen(args):
 			candidates = viewgen.guess_algorithms(args.payload)
 			success("Algorithm candidates:")
 			for candidate in candidates:
-				print("%s/%s" % (candidate[0], candidate[1].upper()))
+				print("%s %s" % (candidate[0], candidate[1].upper()))
 
 		else:
 			hash_alg = list(viewgen.hash_sizes.keys())[list(viewgen.hash_sizes.values()).index(len(sa))]
