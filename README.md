@@ -2,7 +2,7 @@
 
 ### ASP.NET ViewState Generator
 
-**viewgen** is a ViewState generator for , capable of both signing and encrypting payloads with leaked validation keys or `web.config` files.
+**viewgen** is a ViewState generator capable of both signing and encrypting payloads with leaked validation keys or `web.config` files.
 
 ---------------
 
