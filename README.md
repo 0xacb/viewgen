@@ -54,15 +54,25 @@ optional arguments:
 ### Examples
 
 ```bash
-$ ./viewgen --decode --check --webconfig web.config --modifier CA0B0334 "zUylqfbpWnWHwPqet3cH5Prypl94LtUPcoC7ujm9JJdLm8V7Ng4tlnGPEWUXly+CDxBWmtOit2HY314LI8ypNOJuaLdRfxUK7mGsgLDvZsMg/MXN31lcDsiAnPTYUYYcdEH27rT6taXzDWupmQjAjraDueY="
+$ viewgen --decode --check --webconfig web.config --modifier CA0B0334 "zUylqfbpWnWHwPqet3cH5Prypl94LtUPcoC7ujm9JJdLm8V7Ng4tlnGPEWUXly+CDxBWmtOit2HY314LI8ypNOJuaLdRfxUK7mGsgLDvZsMg/MXN31lcDsiAnPTYUYYcdEH27rT6taXzDWupmQjAjraDueY="
 [+] ViewState
 (('1628925133', (None, [3, (['enctype', 'multipart/form-data'], None)])), None)
 [+] Signature
 7441f6eeb4fab5a5f30d6ba99908c08eb683b9e6
 [+] Signature match
 
-$ ./viewgen --webconfig web.config --modifier CA0B0334 "/wEPDwUKMTYyODkyNTEzMw9kFgICAw8WAh4HZW5jdHlwZQUTbXVsdGlwYXJ0L2Zvcm0tZGF0YWRk"
+$ viewgen --webconfig web.config --modifier CA0B0334 "/wEPDwUKMTYyODkyNTEzMw9kFgICAw8WAh4HZW5jdHlwZQUTbXVsdGlwYXJ0L2Zvcm0tZGF0YWRk"
 r4zCP5CdSo5R9XmiEXvp1LHVzX1uICmY7oW2WD/gKS/Mt/s+NKXrMpScr4Gvrji7lFdHPOttFpi2x7YbmQjEjJ2NdBMuzeKFzIuno2DenYF8yVVKx5+LL7LYmI0CVcNQ+jH8VxvzVG58NQIJ/rSr6NqNMBahrVfAyVPgdL4Eke3Bq4XWk6BYW2Bht6ykSHF9szT8tG6KUKwf+T94hFUFNIXXkURptwQJEC/5AMkFXMU0VXDa
+
+$ viewgen --guess "/wEPDwUKMTYyODkyNTEzMw9kFgICAw8WAh4HZW5jdHlwZQUTbXVsdGlwYXJ0L2Zvcm0tZGF0YWRkuVmqYhhtcnJl6Nfet5ERqNHMADI="
+[+] ViewState is not encrypted
+[+] Signature algorithm: SHA1
+
+$ viewgen --guess "zUylqfbpWnWHwPqet3cH5Prypl94LtUPcoC7ujm9JJdLm8V7Ng4tlnGPEWUXly+CDxBWmtOit2HY314LI8ypNOJuaLdRfxUK7mGsgLDvZsMg/MXN31lcDsiAnPTYUYYcdEH27rT6taXzDWupmQjAjraDueY="
+[!] ViewState is encrypted
+[+] Algorithm candidates:
+AES SHA1
+DES/3DES SHA1
 ```
 
 ---------------
