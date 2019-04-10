@@ -218,17 +218,17 @@ def read_webconfig(webconfig_path):
 
 
 def parse_args():
-	parser = argparse.ArgumentParser(description="viewgen is a ViewState generator, capable of both signing and encrypting payloads with leaked validation keys")
-	parser.add_argument("-c", "--webconfig", help="loads web.config file", required=False)
+	parser = argparse.ArgumentParser(description="viewgen is a ViewState tool capable of generating both signed and encrypted payloads with leaked validation keys or web.config files")
+	parser.add_argument("-c", "--webconfig", help="automatically load keys and algorithms from a web.config file", required=False)
 	parser.add_argument("-m", "--modifier", help="VIEWSTATEGENERATOR value", required=False, default="00000000")
-	parser.add_argument("-e", "--encrypted", help="Viewstate is encrypted", required=False, default=False, action="store_true")
-	parser.add_argument("-d", "--decode", help="decodes ViewState payload", required=False, default=False, action="store_true")
-	parser.add_argument("--guess", help="guess signature and encryption mode", required=False, default=False, action="store_true")
-	parser.add_argument("--check", help="checks if modifier and keys are correct for a given ViewState payload", required=False, default=False, action="store_true")
+	parser.add_argument("--decode", help="decode a ViewState payload", required=False, default=False, action="store_true")
+	parser.add_argument("--guess", help="guess signature and encryption mode for a given payload", required=False, default=False, action="store_true")
+	parser.add_argument("--check", help="check if modifier and keys are correct for a given payload", required=False, default=False, action="store_true")
 	parser.add_argument("--vkey", help="validation key", required=False, default="")
 	parser.add_argument("--valg", help="validation algorithm", required=False, default="")
 	parser.add_argument("--dkey", help="decryption key", required=False, default="")
 	parser.add_argument("--dalg", help="decryption algorithm", required=False, default="")
+	parser.add_argument("-e", "--encrypted", help="ViewState is encrypted", required=False, default=False, action="store_true")
 	parser.add_argument("payload", help="viewState payload (base 64 encoded)")
 	args = parser.parse_args()
 

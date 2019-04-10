@@ -2,8 +2,7 @@
 
 ### ASP.NET ViewState Generator
 
-**viewgen** is a ViewState generator capable of both signing and encrypting payloads with leaked validation keys or `web.config` files.
-
+**viewgen** is a ViewState tool capable of generating both signed and encrypted payloads with leaked validation keys or `web.config` files
 ---------------
 
 **Requirements**: Python 3
@@ -21,13 +20,14 @@
 
 ### Usage
 ```bash
-$ ./viewstate -h
-usage: viewgen [-h] [-c WEBCONFIG] [-m MODIFIER] [-e] [-d] [--guess] [--check]
-               [--vkey VKEY] [--valg VALG] [--dkey DKEY] [--dalg DALG]
+$ viewstate -h
+usage: viewgen [-h] [-c WEBCONFIG] [-m MODIFIER] [--decode] [--guess]
+               [--check] [--vkey VKEY] [--valg VALG] [--dkey DKEY]
+               [--dalg DALG] [-e]
                payload
 
-viewgen is a ViewState generator, capable of both signing and encrypting
-payloads with leaked validation keys
+viewgen is a ViewState tool capable of generating both signed and encrypted
+payloads with leaked validation keys or web.config files
 
 positional arguments:
   payload               viewState payload (base 64 encoded)
@@ -35,18 +35,20 @@ positional arguments:
 optional arguments:
   -h, --help            show this help message and exit
   -c WEBCONFIG, --webconfig WEBCONFIG
-                        loads web.config file
+                        automatically load keys and algorithms from a
+                        web.config file
   -m MODIFIER, --modifier MODIFIER
                         VIEWSTATEGENERATOR value
-  -e, --encrypted       Viewstate is encrypted
-  -d, --decode          decodes ViewState payload
-  --guess               guess signature and encryption mode
-  --check               checks if modifier and keys are correct for a given
-                        ViewState payload
+  --decode              decode a ViewState payload
+  --guess               guess signature and encryption mode for a given
+                        payload
+  --check               check if modifier and keys are correct for a given
+                        payload
   --vkey VKEY           validation key
   --valg VALG           validation algorithm
   --dkey DKEY           decryption key
   --dalg DALG           decryption algorithm
+  -e, --encrypted       ViewState is encrypted
 ```
 
 ---------------
