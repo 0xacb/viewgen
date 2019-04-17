@@ -32,7 +32,7 @@ class ViewGen:
 	def __init__(self, validation_key=None, validation_alg=None, dec_key=None, dec_alg=None, modifier=None, encrypted=False):
 		self.validation_key = validation_key
 		self.dec_key = dec_key
-		self.validation_alg = validation_alg.lower()
+		self._init_validation_alg(validation_alg)
 		self._init_dec_alg(dec_alg)
 		self.encrypted = encrypted
 		if modifier is None:
@@ -66,6 +66,7 @@ class ViewGen:
 
 		if parse:
 			return vs.decode(), signature
+
 		return payload, signature
 
 	def encrypt(self, data):
@@ -83,7 +84,7 @@ class ViewGen:
 				iv = self._gen_random_bytes(DES.block_size)
 			cipher = DES.new(self.dec_key[:8], DES.MODE_CBC, iv)
 			payload = pad(data + self.modifier, DES.block_size)
-		elif self.dec_alg == "3DES":  # TODO
+		elif self.dec_alg == "3DES":
 			if not self._reuse_iv:
 				iv = self._gen_random_bytes(DES3.block_size)
 			cipher = DES3.new(self.dec_key[:24], DES3.MODE_CBC, iv)
@@ -107,7 +108,7 @@ class ViewGen:
 			enc = data[DES.block_size:-hash_size]
 			cipher = DES.new(self.dec_key[:8], DES.MODE_CBC, iv)
 			random_bytes_size = 0
-		elif self.dec_alg == "3DES":  # TODO
+		elif self.dec_alg == "3DES":
 			iv = data[0:DES3.block_size]
 			enc = data[DES3.block_size:-hash_size]
 			cipher = DES3.new(self.dec_key[:24], DES3.MODE_CBC, iv)
@@ -129,10 +130,6 @@ class ViewGen:
 
 		if "md5" in self.validation_alg:
 			h = hashlib.md5(iv + enc + self.validation_key)
-		elif "aes" in self.validation_alg:
-			return None  # TODO
-		elif "3des" in self.validation_alg:
-			return None  # TODO
 		else:
 			hash_alg = self._get_hash_alg()
 			if hash_alg:
@@ -147,10 +144,6 @@ class ViewGen:
 
 		if "md5" in self.validation_alg:
 			h = hashlib.md5(data + self.validation_key + ViewGen.MD5_MODIFIER)
-		elif "aes" in self.validation_alg:
-			return None  # TODO
-		elif "3des" in self.validation_alg:
-			return None  # TODO
 		else:
 			hash_alg = self._get_hash_alg()
 			if hash_alg:
@@ -187,6 +180,12 @@ class ViewGen:
 			if len(self.dec_key) == 8:
 				self.dec_alg = "DES"
 
+	def _init_validation_alg(self, validation_alg):
+		self.validation_alg = validation_alg.lower()
+		if self.validation_alg == "aes" or self.validation_alg == "3des":
+			self.validation_alg = "sha1"
+
+
 	def _get_hash_size(self):
 		return self._search_dict(ViewGen.hash_sizes, self.validation_alg)
 
@@ -213,6 +212,9 @@ def read_webconfig(webconfig_path):
 	for subelement in document.getElementsByTagName("pages"):
 		if subelement.getAttribute("viewStateEncryptionMode") == "Always":
 			encrypted = True
+
+	if valg == "AES":
+		encrypted = True
 
 	return vkey, valg, dkey, dalg, encrypted
 
@@ -259,6 +261,7 @@ def run_viewgen(args):
 		viewstate, sa = viewgen.decode(args.payload)
 		encoded = viewgen.encode(viewstate, reuse_iv=True)
 		viewstate, sb = viewgen.decode(encoded)
+
 		if sa == sb:
 			success("Signature match")
 		else:
@@ -273,11 +276,14 @@ def run_viewgen(args):
 			for candidate in candidates:
 				print("%s %s" % (candidate[0], candidate[1].upper()))
 		else:
-			success("ViewState is not encrypted")
+			if viewgen.encrypted:
+				success("ViewState has been decrypted")
+			else:
+				success("ViewState is not encrypted")
 			if signature is None:
 				success("ViewState is not signed")
 			else:
-				hash_alg = list(viewgen.hash_sizes.keys())[list(viewgen.hash_sizes.values()).index(len(sa))]
+				hash_alg = list(viewgen.hash_sizes.keys())[list(viewgen.hash_sizes.values()).index(len(signature))]
 				success("Signature algorithm: %s" % hash_alg.upper())
 
 	if generate:

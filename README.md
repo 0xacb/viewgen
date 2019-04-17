@@ -8,10 +8,6 @@
 
 **Requirements**: Python 3
 
-**Implemented**: AES, DES (Encryption) and MD5, SHA1/256/384/512 (Signatures)
-
-**Not implemented**: 3DES (Encryption) and AES/3DES (Signatures)
-
 ### Installation
 
 `pip3 install --upgrade -r requirements.txt` or `./install.sh`
