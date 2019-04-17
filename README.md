@@ -96,7 +96,7 @@ viewgen --webconfig web.config --modifier MODIFIER PAYLOAD
 
 **4 -** Send a POST request with the generated ViewState to the same endpoint
 
-**5 -** - Profit 🎉🎉
+**5 -** Profit 🎉🎉
 
 ---------------
 
