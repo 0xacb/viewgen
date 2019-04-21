@@ -127,3 +127,4 @@ $ viewgen --webconfig web.config --modifier MODIFIER PAYLOAD
 **Talks about this technique**
 
 - https://illuminopi.com/assets/files/BSidesIowa_RCEvil.net_20190420.pdf
+- https://speakerdeck.com/pwntester/dot-net-serialization-detecting-and-defending-vulnerable-endpoints
