@@ -1,3 +1,3 @@
 colored
 viewstate
-pycrypto
+pycryptodome
