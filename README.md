@@ -17,7 +17,7 @@
 
 ### Usage
 ```bash
-$ viewstate -h
+$ viewgen -h
 usage: viewgen [-h] [--webconfig WEBCONFIG] [-m MODIFIER] [-c COMMAND]
                [--decode] [--guess] [--check] [--vkey VKEY] [--valg VALG]
                [--dkey DKEY] [--dalg DALG] [-e]
