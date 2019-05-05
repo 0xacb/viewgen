@@ -119,12 +119,16 @@ $ viewgen --webconfig web.config --modifier MODIFIER PAYLOAD
 
 ---------------
 
-**CTF Writeups about this technique**
+**CTF Writeups**
 
 - https://xz.aliyun.com/t/3019
 - https://cyku.tw/ctf-hitcon-2018-why-so-serials/
 
-**Talks about this technique**
+**Blog Posts**
+
+- https://soroush.secproject.com/blog/2019/04/exploiting-deserialisation-in-asp-net-via-viewstate/
+
+**Talks**
 
 - https://illuminopi.com/assets/files/BSidesIowa_RCEvil.net_20190420.pdf
 - https://speakerdeck.com/pwntester/dot-net-serialization-detecting-and-defending-vulnerable-endpoints
