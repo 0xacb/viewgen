@@ -132,3 +132,9 @@ $ viewgen --webconfig web.config --modifier MODIFIER PAYLOAD
 
 - https://illuminopi.com/assets/files/BSidesIowa_RCEvil.net_20190420.pdf
 - https://speakerdeck.com/pwntester/dot-net-serialization-detecting-and-defending-vulnerable-endpoints
+
+---------------
+
+### ⚠ Legal Disclaimer ⚠
+
+This project is made for educational and ethical testing purposes only. Usage of this tool for attacking targets without prior mutual consent is illegal. Developers assume no liability and are not responsible for any misuse or damage caused by this tool.
