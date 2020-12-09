@@ -275,12 +275,20 @@ def run_viewgen(args):
 
 	viewgen = ViewGen(binascii.unhexlify(args.vkey), args.valg, binascii.unhexlify(args.dkey), args.dalg, args.modifier, args.encrypted)
 
-	if args.decode:
-		viewstate, signature = viewgen.decode(args.payload, parse=True)
-		success("ViewState")
-		pprint(viewstate)
-		if signature is not None:
-			success("Signature: %s" % str(binascii.hexlify(signature), "utf-8"))
+	if args.decode: ## Changes are here @OmriBaso Github
+		if args.payload[:7] == "file://":
+			with open(args.payload[7:]) as data:
+				data = data.read()
+				print('file mode')
+				viewstate, signature = viewgen.decode(data, parse=True)
+				success("ViewState")
+				pprint(viewstate)
+		else:
+			viewstate, signature = viewgen.decode(args.payload, parse=True)
+			success("ViewState")
+			pprint(viewstate)
+			if signature is not None:
+				success("Signature: %s" % str(binascii.hexlify(signature), "utf-8"))
 
 	if args.check:
 		viewstate, sa = viewgen.decode(args.payload)
