@@ -275,7 +275,7 @@ def run_viewgen(args):
 
 	viewgen = ViewGen(binascii.unhexlify(args.vkey), args.valg, binascii.unhexlify(args.dkey), args.dalg, args.modifier, args.encrypted)
 
-	if args.decode:
+	if args.decode: ## Changes are here @OmriBaso Github
 		if args.payload[:7] == "file://":
 			with open(args.payload[7:]) as data:
 				data = data.read()
