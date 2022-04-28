@@ -10,7 +10,7 @@
 
 ### Installation
 
-`pip3 install --upgrade -r requirements.txt` or `./install.sh`
+`pip3 install --user --upgrade -r requirements.txt` or `./install.sh`
 
 
 ---------------
@@ -20,7 +20,7 @@
 $ viewgen -h
 usage: viewgen [-h] [--webconfig WEBCONFIG] [-m MODIFIER] [-c COMMAND]
                [--decode] [--guess] [--check] [--vkey VKEY] [--valg VALG]
-               [--dkey DKEY] [--dalg DALG] [-e]
+               [--dkey DKEY] [--dalg DALG] [-e] [-f FILE]
                [payload]
 
 viewgen is a ViewState tool capable of generating both signed and encrypted
@@ -37,7 +37,7 @@ optional arguments:
   -m MODIFIER, --modifier MODIFIER
                         VIEWSTATEGENERATOR value
   -c COMMAND, --command COMMAND
-                        Command to execute
+                        command to execute
   --decode              decode a ViewState payload
   --guess               guess signature and encryption mode for a given
                         payload
@@ -48,6 +48,7 @@ optional arguments:
   --dkey DKEY           decryption key
   --dalg DALG           decryption algorithm
   -e, --encrypted       ViewState is encrypted
+  -f FILE, --file FILE  read ViewState payload from file
 ```
 
 ---------------
@@ -104,7 +105,7 @@ However, you can also generate it manually:
 $ viewgen --webconfig web.config --modifier MODIFIER PAYLOAD
 ```
 
-**4 -** Send a POST request with the generated ViewState to the same endpoint
+**4 -** Send a `POST` request with the generated ViewState to the same endpoint
 
 **5 -** Profit 🎉🎉
 
@@ -116,6 +117,7 @@ $ viewgen --webconfig web.config --modifier MODIFIER PAYLOAD
 - [@infosec_au](https://twitter.com/infosec_au)
 - [@smiegles](https://twitter.com/smiegles)
 - **BBAC**
+- All contributors
 
 ---------------
 

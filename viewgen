@@ -16,6 +16,7 @@ import base64
 import os
 import binascii
 import struct
+import sys
 
 
 pad = lambda s, bs: s + (bs - len(s) % bs) * chr(bs - len(s) % bs).encode("ascii")
@@ -253,8 +254,13 @@ def parse_args():
 	parser.add_argument("--dalg", help="decryption algorithm", required=False, default="")
 	parser.add_argument("-e", "--encrypted", help="ViewState is encrypted", required=False, default=False, action="store_true")
 	parser.add_argument("payload", help="ViewState payload (base 64 encoded)", nargs="?")
+	parser.add_argument("-f", "--file", help="read ViewState payload from file", required=False)
 	args = parser.parse_args()
 
+	if len(sys.argv) == 1:
+		parser.print_help()
+		exit(1)
+	
 	if args.webconfig:
 		args.vkey, args.valg, args.dkey, args.dalg, args.encrypted = read_webconfig(args.webconfig)
 
@@ -262,9 +268,12 @@ def parse_args():
 
 
 def run_viewgen(args):
-	if args.payload is None and args.command is None:
-		warning("The following arguments are required: payload")
-		exit(1)
+	if not args.payload:
+		if args.file:
+			with open(args.file) as f:
+				args.payload = f.read()
+		else:
+			args.payload = sys.stdin.read().rstrip()
 
 	generate = not args.decode and not args.check and not args.guess
 
@@ -275,20 +284,12 @@ def run_viewgen(args):
 
 	viewgen = ViewGen(binascii.unhexlify(args.vkey), args.valg, binascii.unhexlify(args.dkey), args.dalg, args.modifier, args.encrypted)
 
-	if args.decode: ## Changes are here @OmriBaso Github
-		if args.payload[:7] == "file://":
-			with open(args.payload[7:]) as data:
-				data = data.read()
-				print('file mode')
-				viewstate, signature = viewgen.decode(data, parse=True)
-				success("ViewState")
-				pprint(viewstate)
-		else:
-			viewstate, signature = viewgen.decode(args.payload, parse=True)
-			success("ViewState")
-			pprint(viewstate)
-			if signature is not None:
-				success("Signature: %s" % str(binascii.hexlify(signature), "utf-8"))
+	if args.decode:
+		viewstate, signature = viewgen.decode(args.payload, parse=True)
+		success("ViewState")
+		pprint(viewstate)
+		if signature is not None:
+			success("Signature: %s" % str(binascii.hexlify(signature), "utf-8"))
 
 	if args.check:
 		viewstate, sa = viewgen.decode(args.payload)
