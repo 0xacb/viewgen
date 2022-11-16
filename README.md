@@ -1,4 +1,4 @@
-# viewgen
+# Viewgen
 
 ### ASP.NET ViewState Generator
 
