@@ -1,4 +1,4 @@
-# viewgen
+# Viewgen
 
 ### ASP.NET ViewState Generator
 
@@ -6,17 +6,20 @@
 
 ---------------
 
-**Requirements**: Python 3
-
 ### Installation
+
+**Requirements**: Python 3
 
 `pip3 install --user --upgrade -r requirements.txt` or `./install.sh`
 
+**Docker**
+
+`docker build -t viewgen .`
 
 ---------------
 
 ### Usage
-```bash
+```
 $ viewgen -h
 usage: viewgen [-h] [--webconfig WEBCONFIG] [-m MODIFIER] [-c COMMAND]
                [--decode] [--guess] [--check] [--vkey VKEY] [--valg VALG]
