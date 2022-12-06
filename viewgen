@@ -36,7 +36,7 @@ class ViewGen:
 	hash_algs = {"SHA1": hashlib.sha1, "MD5": hashlib.md5, "SHA256": hashlib.sha256, "SHA384": hashlib.sha384, "SHA512": hashlib.sha512, "AES": hashlib.sha1, "3DES": hashlib.sha1}
 	hash_sizes = {"SHA1": 20, "MD5": 16, "SHA256": 32, "SHA384": 48, "SHA512": 64, "AES": 20, "3DES": 20}
 
-	def __init__(self, validation_key=None, validation_alg=None, dec_key=None, dec_alg=None, modifier=None, encrypted=False, viewstateuserkey=False):
+	def __init__(self, validation_key=None, validation_alg=None, dec_key=None, dec_alg=None, modifier=None, encrypted=False, viewstateuserkey=None):
 		self.validation_key = validation_key
 		self.dec_key = dec_key
 		self._init_validation_alg(validation_alg)
