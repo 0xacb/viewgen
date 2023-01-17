@@ -21,9 +21,10 @@
 ### Usage
 ```
 $ viewgen -h
-usage: viewgen [-h] [--webconfig WEBCONFIG] [-m MODIFIER] [-c COMMAND]
-               [--decode] [--guess] [--check] [--vkey VKEY] [--valg VALG]
-               [--dkey DKEY] [--dalg DALG] [-u] [-e] [-f FILE] [--version]
+usage: viewgen [-h] [--webconfig WEBCONFIG] [-m MODIFIER]
+               [--viewstateuserkey VIEWSTATEUSERKEY] [-c COMMAND] [--decode]
+               [--guess] [--check] [--vkey VKEY] [--valg VALG] [--dkey DKEY]
+               [--dalg DALG] [-u] [-e] [-f FILE] [--version]
                [payload]
 
 viewgen is a ViewState tool capable of generating both signed and encrypted
@@ -39,6 +40,8 @@ options:
                         web.config file
   -m MODIFIER, --modifier MODIFIER
                         VIEWSTATEGENERATOR value
+  --viewstateuserkey VIEWSTATEUSERKEY
+                        ViewStateUserKey CSRF value
   -c COMMAND, --command COMMAND
                         command to execute
   --decode              decode a ViewState payload
