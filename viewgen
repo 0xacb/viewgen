@@ -348,6 +348,8 @@ def run_viewgen(args):
 			result = viewgen.encode(generate_shell_payload(args.command))
 		if args.urlencode:
 			result = urllib.parse.quote(result, safe="")
+		else:
+			result = str(result, "utf-8")
 		print(result)
 
 
