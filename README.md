@@ -23,7 +23,7 @@
 $ viewgen -h
 usage: viewgen [-h] [--webconfig WEBCONFIG] [-m MODIFIER] [-c COMMAND]
                [--decode] [--guess] [--check] [--vkey VKEY] [--valg VALG]
-               [--dkey DKEY] [--dalg DALG] [-e] [-f FILE]
+               [--dkey DKEY] [--dalg DALG] [-u] [-e] [-f FILE] [--version]
                [payload]
 
 viewgen is a ViewState tool capable of generating both signed and encrypted
@@ -32,7 +32,7 @@ payloads with leaked validation keys or web.config files
 positional arguments:
   payload               ViewState payload (base 64 encoded)
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
   --webconfig WEBCONFIG
                         automatically load keys and algorithms from a
@@ -50,8 +50,10 @@ optional arguments:
   --valg VALG           validation algorithm
   --dkey DKEY           decryption key
   --dalg DALG           decryption algorithm
+  -u, --urlencode       URL encode viewstates
   -e, --encrypted       ViewState is encrypted
   -f FILE, --file FILE  read ViewState payload from file
+  --version             show viewgen version
 ```
 
 ---------------
