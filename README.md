@@ -14,7 +14,7 @@
 
 **Docker**
 
-`docker build -t viewgen .`
+`docker build -t viewgen .` or `docker pull 0xacb/viewgen`
 
 ---------------
 
