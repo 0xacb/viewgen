@@ -20,7 +20,7 @@ import sys
 import urllib.parse
 
 
-VERSION = 0.2
+VERSION = 0.3
 
 
 pad = lambda s, bs: s + (bs - len(s) % bs) * chr(bs - len(s) % bs).encode("ascii")
@@ -304,6 +304,9 @@ def run_viewgen(args):
 
 	if args.decode:
 		viewstate, signature = viewgen.decode(args.payload, parse=True)
+		if not viewstate:
+			warning("ViewState is encrypted")
+			exit(1)
 		success("ViewState")
 		pprint(viewstate)
 		if signature is not None:
@@ -311,6 +314,9 @@ def run_viewgen(args):
 
 	if args.check:
 		viewstate, sa = viewgen.decode(args.payload)
+		if viewstate is None:
+			warning("ViewState is encrypted")
+			exit(1)
 		encoded = viewgen.encode(viewstate, reuse_iv=True)
 		viewstate, sb = viewgen.decode(encoded)
 
