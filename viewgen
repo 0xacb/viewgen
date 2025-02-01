@@ -87,7 +87,7 @@ class ViewGen:
 	def encrypt(self, data):
 		iv = self._iv
 		random_bytes = self._random_bytes
-
+		
 		if self.dec_alg == "AES":
 			if not self._reuse_iv:
 				iv = self._gen_random_bytes(AES.block_size)
@@ -116,8 +116,7 @@ class ViewGen:
 			iv = data[0:AES.block_size]
 			enc = data[AES.block_size:-hash_size]
 			cipher = AES.new(self.dec_key, AES.MODE_CBC, iv)
-			block_size = AES.block_size
-			random_bytes_size = block_size
+			random_bytes_size = len(self.dec_key) - AES.block_size
 		elif self.dec_alg == "DES":
 			iv = data[0:DES.block_size]
 			enc = data[DES.block_size:-hash_size]
