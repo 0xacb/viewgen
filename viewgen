@@ -291,14 +291,15 @@ def run_viewgen(args):
 		else:
 			args.payload = sys.stdin.read().rstrip()
 
-	if args.encrypted:
-		if not args.dkey or not args.dalg:
-			warning("Please provide deryption key and algorithm or a valid web.config")
-			exit(1)
-	else:
-		if not args.vkey or not args.valg:
-			warning("Please provide validation key and algorithm or a valid web.config")
-			exit(1)
+	if generate or args.check:
+		if args.encrypted:
+			if not args.dkey or not args.dalg:
+				warning("Please provide deryption key and algorithm or a valid web.config")
+				exit(1)
+		else:
+			if not args.vkey or not args.valg:
+				warning("Please provide validation key and algorithm or a valid web.config")
+				exit(1)
 
 	viewgen = ViewGen(binascii.unhexlify(args.vkey), args.valg, binascii.unhexlify(args.dkey), args.dalg, args.modifier, args.encrypted, args.viewstateuserkey)
 
