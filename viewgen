@@ -91,7 +91,7 @@ class ViewGen:
 		if self.dec_alg == "AES":
 			if not self._reuse_iv:
 				iv = self._gen_random_bytes(AES.block_size)
-				random_bytes = self._gen_random_bytes(AES.block_size)
+				random_bytes = self._gen_random_bytes(len(self.dec_key) - AES.block_size)
 			cipher = AES.new(self.dec_key, AES.MODE_CBC, iv)
 			payload = pad(random_bytes + data + self.modifier, AES.block_size)
 		elif self.dec_alg == "DES":
